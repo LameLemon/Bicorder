@@ -2,7 +2,7 @@
 
 class Button {
     private:
-        const int debounceDelay = 200;
+        const int debounceDelay = 250;
         int buttonState = 0;
         int pin;
         int lastButtonState = LOW;
