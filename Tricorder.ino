@@ -10,6 +10,9 @@
 #define DOWN_PIN 4
 #define UP_PIN 3
 #define SELECT_PIN 5
+#define ON_OFF_PIN 9
+#define ON_LED 13
+#define BACKLIGHT 12
 static const int RXPin = 10, TXPin = 11;
 static const uint32_t GPSBaud = 4800;
 
@@ -30,6 +33,7 @@ struct date {
     int second;
     int centisecond; 
 } d;
+int prev_r = 0;
 
 Button down_button(DOWN_PIN);
 Button up_button(UP_PIN);
@@ -57,6 +61,10 @@ void setup() {
         Serial.println("Could not find a valid BMP280 sensor, check wiring!");
         while (1);
     }
+
+    pinMode(ON_OFF_PIN, INPUT_PULLUP);
+    pinMode(ON_LED, OUTPUT);
+    pinMode(BACKLIGHT, OUTPUT);
 }
 
 void loop() {
@@ -72,6 +80,27 @@ void loop() {
             location();
             datetime();
         }
+    
+    int r = digitalRead(ON_OFF_PIN);
+    // r = HIGH;
+    if (!r) {
+        digitalWrite(ON_LED, HIGH);
+        digitalWrite(BACKLIGHT, LOW);
+        digitalWrite(BACKLIGHT, LOW);
+        digitalWrite(BACKLIGHT, LOW);
+        if (prev_r != r)
+            drawMenu();
+    } else {
+        digitalWrite(ON_LED, LOW);
+        digitalWrite(BACKLIGHT, HIGH);
+        digitalWrite(BACKLIGHT, HIGH);
+        digitalWrite(BACKLIGHT, HIGH);
+        if((millis() - lastUpdate > 1500))
+            displayDateTime();
+        if (prev_r != r)
+            displayDateTime();
+    }
+    prev_r = r;
 }
 
 void location() {
@@ -143,6 +172,24 @@ void displayInfo() {
   }
 
   Serial.println();
+}
+
+void displayDateTime(){
+    lastUpdate = millis();
+
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(d.month);
+    lcd.print("/");
+    lcd.print(d.day);
+    lcd.print("/");
+    lcd.print(d.year);
+    lcd.setCursor(0, 1);
+    lcd.print(d.hour);
+    lcd.print(":");
+    lcd.print(d.minute);
+    lcd.print(":");
+    lcd.print(d.second);
 }
 
 // Check if buttons are pressed and call perform respective actions
