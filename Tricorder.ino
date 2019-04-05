@@ -47,6 +47,27 @@ TinyGPSPlus gps;
 
 SoftwareSerial ss(RXPin, TXPin);
 
+byte block[8] = {B11111,B11111,B11111,B11111,B11111,B11111,B11111,B11111};
+byte therm_top[8] = {
+  B00100,
+  B01010,
+  B01010,
+  B01010,
+  B01010,
+  B01110,
+  B01110,
+  B01110
+};
+byte therm_bot[8] = {
+  B01110,
+  B01110,
+  B01110,
+  B01110,
+  B11111,
+  B11111,
+  B11111,
+  B01110
+};
 
 void setup() {
     Serial.begin(115200);
@@ -55,7 +76,6 @@ void setup() {
 
     // for (int i =0; i< ARRAYSIZE; i++) Serial.println(results[i]);
 
-    drawMenu();
 
     if (!bme.begin()) {  
         Serial.println("Could not find a valid BMP280 sensor, check wiring!");
@@ -65,6 +85,10 @@ void setup() {
     pinMode(ON_OFF_PIN, INPUT_PULLUP);
     pinMode(ON_LED, OUTPUT);
     pinMode(BACKLIGHT, OUTPUT);
+
+    boot_seq();
+    drawMenu();
+
 }
 
 void loop() {
@@ -250,6 +274,9 @@ void selectItem() {
             lcd.setCursor(0, 0);
             lcd.print(bme.readTemperature());
             lcd.print(" *C");
+            lcd.setCursor(0, 1);
+            lcd.print(bme.readTemperature()* 9/5 + 32 );
+            lcd.print(" *F");
             break;
         case 2:
             lcd.clear();
@@ -288,4 +315,26 @@ void selectItem() {
         default:
             break;
   }
+}
+
+void boot_seq(){
+    lcd.clear();
+    lcd.createChar(0, block);
+    for (int i = 0; i < 16; i++) {
+        lcd.setCursor(i, 0);
+        delay(100);
+        lcd.write(0);
+    }
+    for (int i = 0; i < 16; i++) {
+        lcd.setCursor(i, 1);
+        delay(100);
+        lcd.write(0);
+    }
+    delay(100);
+    lcd.clear();
+    lcd.setCursor(6, 0);
+    lcd.print("BOOT");
+    lcd.setCursor(4, 1);
+    lcd.print("COMPLETE");
+    delay(1000);
 }
