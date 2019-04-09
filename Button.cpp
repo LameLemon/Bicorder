@@ -39,10 +39,10 @@ class Button {
 
                     if (buttonState == HIGH){
                         ret_state = 1;
-                    } 
-                } else {
-                    ret_state = 0;
-                }
+                    } else {
+                        ret_state = 0;
+                    }
+                } 
             }   
 
             lastButtonState = reading;

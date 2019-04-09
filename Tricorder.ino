@@ -7,12 +7,16 @@
 #include <SoftwareSerial.h>
 
 #define ARRAYSIZE 10
-#define DOWN_PIN 4
-#define UP_PIN 3
+#define DOWN_PIN 3
+#define UP_PIN 4
 #define SELECT_PIN 5
 #define ON_OFF_PIN 9
 #define ON_LED 13
 #define BACKLIGHT 12
+#define LED_1 A1
+#define LED_2 A2
+#define LED_3 A3
+
 static const int RXPin = 10, TXPin = 11;
 static const uint32_t GPSBaud = 4800;
 
@@ -46,6 +50,10 @@ Adafruit_BMP280 bme;
 TinyGPSPlus gps;
 
 SoftwareSerial ss(RXPin, TXPin);
+
+unsigned long previousMillis = 0;
+const long interval = 500;
+int currentLED = 0;
 
 byte block[8] = {B11111,B11111,B11111,B11111,B11111,B11111,B11111,B11111};
 byte therm_top[8] = {
@@ -86,8 +94,11 @@ void setup() {
     pinMode(ON_LED, OUTPUT);
     pinMode(BACKLIGHT, OUTPUT);
 
-    boot_seq();
+    // boot_seq();
     drawMenu();
+    pinMode(LED_1, INPUT); 
+    pinMode(LED_2, INPUT);
+    pinMode(LED_3, INPUT);
 
 }
 
@@ -125,8 +136,59 @@ void loop() {
             displayDateTime();
     }
     prev_r = r;
+
+    currentLED = 1;
+
+    unsigned long currentMillis = millis();
+    if (currentMillis - previousMillis >= interval) {
+        previousMillis = currentMillis;
+        Serial.println(currentLED);
+        switch (currentLED)
+        {
+            case 0:
+                set_pins(LED_2, LED_1);
+                break;
+            case 1:
+                set_pins(LED_1, LED_2);
+                break;
+            case 2:
+                set_pins(LED_3, LED_2);
+                break;
+            case 3:
+                set_pins(LED_2, LED_3);
+                break;
+            case 4:
+                set_pins(LED_3, LED_1);
+                break;
+            case 5:
+                set_pins(LED_1, LED_3);
+                break;
+            default:
+                break;
+        }
+        if (currentLED == 6)
+            currentLED = 0;
+        else
+            currentLED++;
+    }
 }
 
+void set_pins(int high_pin, int low_pin) {
+   led_off();
+   pinMode(high_pin, OUTPUT);
+   pinMode(low_pin, OUTPUT);
+   digitalWrite(high_pin, HIGH);
+   digitalWrite(low_pin,LOW);
+}
+
+void led_off() {
+   pinMode(LED_1, INPUT); 
+   pinMode(LED_2, INPUT);
+   pinMode(LED_3, INPUT);
+   digitalWrite(LED_1, LOW);
+   digitalWrite(LED_2, LOW);
+   digitalWrite(LED_3, LOW);
+}
 void location() {
     if (gps.location.isValid()){
         c.lat = gps.location.lat();
@@ -221,6 +283,7 @@ void checkButtons() {
     down_button.check();
     up_button.check();
     select_button.check();
+    // Serial.println(up_button.state());
 
     if (down_button.state() == HIGH && scroll < 5) {
         scroll++;
@@ -230,7 +293,7 @@ void checkButtons() {
     }
     if (up_button.state() == HIGH && scroll > 0) {
         scroll--;
-        Serial.print("scroll: ");
+        Serial.print("scroll`: ");
         Serial.println(scroll);
         drawMenu();
     }
