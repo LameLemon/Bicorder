@@ -20,6 +20,9 @@
 static const int RXPin = 10, TXPin = 11;
 static const uint32_t GPSBaud = 4800;
 
+int color = 0;
+int in_color = 0;
+
 String results[ARRAYSIZE] = { "Location", "Temperature", "Pressure", "Altitude", "Time", "Colors" };
 int scroll = 0;     // location on menu
 int in_item = 0;    // true if in selectItem()
@@ -94,7 +97,7 @@ void setup() {
     pinMode(ON_LED, OUTPUT);
     pinMode(BACKLIGHT, OUTPUT);
 
-    // boot_seq();
+    boot_seq();
     drawMenu();
     pinMode(LED_1, INPUT); 
     pinMode(LED_2, INPUT);
@@ -103,6 +106,7 @@ void setup() {
 }
 
 void loop() {
+    analogWrite(6, color);
     checkButtons();
 
     // Update selectItem every 1.5 seconds
@@ -142,7 +146,7 @@ void loop() {
     unsigned long currentMillis = millis();
     if (currentMillis - previousMillis >= interval) {
         previousMillis = currentMillis;
-        Serial.println(currentLED);
+        // Serial.println(currentLED);
         switch (currentLED)
         {
             case 0:
@@ -284,14 +288,16 @@ void checkButtons() {
     up_button.check();
     select_button.check();
     // Serial.println(up_button.state());
+    int down_button_state = down_button.state();
+    int up_button_state = up_button.state();
 
-    if (down_button.state() == HIGH && scroll < 5) {
+    if (down_button_state == HIGH && scroll < 5 && in_color == 0) {
         scroll++;
         Serial.print("scroll: ");
         Serial.println(scroll);
         drawMenu();
     }
-    if (up_button.state() == HIGH && scroll > 0) {
+    if (up_button_state == HIGH && scroll > 0 && in_color == 0) {
         scroll--;
         Serial.print("scroll`: ");
         Serial.println(scroll);
@@ -301,6 +307,7 @@ void checkButtons() {
         Serial.print("in_item: ");
         Serial.print(in_item);
         if (in_item) {
+            in_color = 0;
             in_item = 0;
             drawMenu();
         } else {
@@ -309,6 +316,31 @@ void checkButtons() {
         }
         Serial.println(in_item);
     }
+
+    if (down_button_state == HIGH && in_color == 1) {
+        if (color > 10) {
+            color = color - 10;
+        } else {
+            color = 0;
+            lcd.setCursor(0, 1);
+            lcd.print("min value");
+        }
+        Serial.print("color: ");
+        Serial.println(color);
+    }
+    if (up_button_state == HIGH && in_color == 1) {
+        if (color > 250) {
+            color = 250;
+            lcd.setCursor(0, 1);
+            lcd.print("max value");
+        } else {
+            color = color + 10;
+        }
+        Serial.print("color: ");
+        Serial.println(color);
+    }
+
+
 }
 
 // Draw manu based on scroll position
@@ -369,11 +401,21 @@ void selectItem() {
             lcd.print(d.second);
             break;
         case 5:
+            in_color = 1;
             lcd.clear();
             lcd.setCursor(0, 0);
-            lcd.print("UNDER ");
-            lcd.setCursor(0, 1);
-            lcd.print("CONSTRUCTION");
+            lcd.print("Color: ");
+            lcd.print(color);
+            if (color > 250) {
+                color = 250;
+                lcd.setCursor(0, 1);
+                lcd.print("max value");
+            }
+            if (color < 0) {
+                color = 0;
+                lcd.setCursor(0, 1);
+                lcd.print("min value");
+            }
             break;
         default:
             break;
@@ -399,5 +441,10 @@ void boot_seq(){
     lcd.print("BOOT");
     lcd.setCursor(4, 1);
     lcd.print("COMPLETE");
+    // lcd.clear();
+    // lcd.setCursor(6, 0);
+    // lcd.print("GAMEBOY");
+    // lcd.setCursor(4, 1);
+    // lcd.print("OwO");
     delay(1000);
 }
