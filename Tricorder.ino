@@ -10,12 +10,18 @@
 #define DOWN_PIN 3
 #define UP_PIN 4
 #define SELECT_PIN 5
-#define ON_OFF_PIN 9
-#define ON_LED 13
+// #define ON_OFF_PIN 9
+// #define ON_LED 13
+#define ON_OFF_PIN 13
+#define ON_LED 9
 #define BACKLIGHT 12
 #define LED_1 A1
 #define LED_2 A2
 #define LED_3 A3
+#define NUMPIXELS 16
+#define DELAYVAL 250
+
+
 
 static const int RXPin = 10, TXPin = 11;
 static const uint32_t GPSBaud = 4800;
@@ -81,11 +87,13 @@ byte therm_bot[8] = {
 };
 
 void setup() {
+
     Serial.begin(115200);
     ss.begin(GPSBaud);
     lcd.begin(16, 2);
 
     // for (int i =0; i< ARRAYSIZE; i++) Serial.println(results[i]);
+    // Serial.println("test0");
 
 
     if (!bme.begin()) {  
@@ -121,7 +129,8 @@ void loop() {
         }
     
     int r = digitalRead(ON_OFF_PIN);
-    // r = HIGH;
+    // r = LOW;
+    Serial.println(r);
     if (!r) {
         digitalWrite(ON_LED, HIGH);
         digitalWrite(BACKLIGHT, LOW);
