@@ -13,17 +13,10 @@
 #define SELECT_PIN 5
 // #define ON_OFF_PIN 9
 // #define ON_LED 13
-#define ON_OFF_PIN 13
+#define ON_OFF_PIN 13 // does not work since this pin cannot be used an input
 #define ON_LED 9
 #define BACKLIGHT 12
 #define PIN A0
-#define NUMPIXELS 16
-#define DELAYVAL_NEO 500
-unsigned long previousNeo = 0;
-int neo_on = 0;
-
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-
 
 static const int RXPin = 10, TXPin = 11;
 static const uint32_t GPSBaud = 4800;
@@ -66,35 +59,13 @@ unsigned long previousMillis = 0;
 const long interval = 500;
 int currentLED = 0;
 
+// solid block used to draw boot sequence
 byte block[8] = {B11111,B11111,B11111,B11111,B11111,B11111,B11111,B11111};
-byte therm_top[8] = {
-  B00100,
-  B01010,
-  B01010,
-  B01010,
-  B01010,
-  B01110,
-  B01110,
-  B01110
-};
-byte therm_bot[8] = {
-  B01110,
-  B01110,
-  B01110,
-  B01110,
-  B11111,
-  B11111,
-  B11111,
-  B01110
-};
 
 void setup() {
-    pixels.begin();
-
     Serial.begin(115200);
     ss.begin(GPSBaud);
     lcd.begin(16, 2);
-
 
     if (!bme.begin()) {  
         Serial.println("Could not find a valid BMP280 sensor, check wiring!");
@@ -104,9 +75,8 @@ void setup() {
     pinMode(ON_OFF_PIN, INPUT_PULLUP);
     pinMode(ON_LED, OUTPUT);
     pinMode(BACKLIGHT, OUTPUT);
-    // pinMode(PIN, OUTPUT);
 
-    // boot_seq();
+    boot_seq();
     drawMenu();
 }
 
@@ -125,9 +95,9 @@ void loop() {
             datetime();
         }
     
+    // removed due to wriring pin 13 wrong
+    // displays time and turns off blacklight when ON_OFF button HIGH and menu otherwise
     int r = digitalRead(ON_OFF_PIN);
-    // r = LOW;
-    // Serial.println(r);
     if (!r) {
         digitalWrite(ON_LED, HIGH);
         digitalWrite(BACKLIGHT, LOW);
@@ -147,20 +117,6 @@ void loop() {
     }
     prev_r = r;
 
-    unsigned long currentMillis = millis();
-    if(currentMillis - previousNeo >= DELAYVAL_NEO) {
-        Serial.println(neo_on);
-        previousNeo = currentMillis;
-
-        if (neo_on < NUMPIXELS) {
-            pixels.setPixelColor(neo_on, pixels.Color(0, 150, 0));
-            pixels.show();
-            neo_on++;
-        } else {
-            pixels.clear();
-            neo_on = 0;
-        }
-   }
 
 }
 
@@ -171,7 +127,7 @@ void set_pins(int high_pin, int low_pin) {
    digitalWrite(low_pin,LOW);
 }
 
-
+// sets longitude and latitude
 void location() {
     if (gps.location.isValid()){
         c.lat = gps.location.lat();
@@ -182,6 +138,7 @@ void location() {
     }
 }
 
+// sets data and time
 void datetime(){
     if (gps.date.isValid()) {
         d.month = gps.date.month();
@@ -205,6 +162,7 @@ void datetime(){
         d.centisecond = 24;
     }
 }
+
 void displayInfo() {
   Serial.print(F("  Date/Time: "));
   if (gps.date.isValid())
@@ -401,6 +359,7 @@ void selectItem() {
   }
 }
 
+// boot sequence shows loading bars on screen on start up
 void boot_seq(){
     lcd.clear();
     lcd.createChar(0, block);
@@ -420,10 +379,5 @@ void boot_seq(){
     lcd.print("BOOT");
     lcd.setCursor(4, 1);
     lcd.print("COMPLETE");
-    // lcd.clear();
-    // lcd.setCursor(6, 0);
-    // lcd.print("GAMEBOY");
-    // lcd.setCursor(4, 1);
-    // lcd.print("OwO");
     delay(1000);
 }

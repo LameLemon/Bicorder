@@ -1,3 +1,11 @@
+/*
+    Debounce without delay
+
+    Allows you to read an input button using polling. This is 
+    separated into its own class to make it easier and cleaner
+    to add more than one button. 
+
+*/
 #include <Arduino.h>
 
 class Button {
